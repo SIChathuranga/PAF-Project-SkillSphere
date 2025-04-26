@@ -17,6 +17,7 @@ public class CommentController {
     @Autowired
     private CommentService commentService;
 
+    //Create new comment
     @PostMapping
     public ResponseEntity<?> createComment(@RequestBody Comment comment) {
         try {
@@ -27,6 +28,7 @@ public class CommentController {
         }
     }
 
+    //Get comments by post id
     @GetMapping("/{postId}")
     public ResponseEntity<?> getCommentsByPostId(@PathVariable String postId) {
         try {
@@ -37,16 +39,8 @@ public class CommentController {
         }
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteComment(@PathVariable String id) {
-        try {
-            commentService.deleteComment(id);
-            return ResponseEntity.ok("Comment deleted successfully");
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error deleting comment: " + e.getMessage());
-        }
-    }
 
+    //Update comment
     @PutMapping
     public ResponseEntity<?> updateComment(@RequestBody CommentDto commentDto) {
         try {
@@ -56,4 +50,14 @@ public class CommentController {
             return ResponseEntity.status(500).body("Error updating comment: " + e.getMessage());
         }
     }
+     //Delete comment
+     @DeleteMapping("/{id}")
+     public ResponseEntity<?> deleteComment(@PathVariable String id) {
+         try {
+             commentService.deleteComment(id);
+             return ResponseEntity.ok("Comment deleted successfully");
+         } catch (Exception e) {
+             return ResponseEntity.status(500).body("Error deleting comment: " + e.getMessage());
+         }
+     }
 }
