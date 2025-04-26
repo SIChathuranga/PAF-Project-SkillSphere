@@ -1,4 +1,4 @@
-package com.backend.backend.model;
+package repository;
 
 
 import lombok.AllArgsConstructor;
