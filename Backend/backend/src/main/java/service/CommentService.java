@@ -1,12 +1,12 @@
+package service;
 
-package com.gym.gymunity.service;
-
-import com.gym.gymunity.Repo.CommentRepository;
-import com.gym.gymunity.dto.CommentDto;
-import com.gym.gymunity.model.Comment;
+import repository.CommentRepository;
+import dto.CommentDto;
+import model.Comment;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CommentService {
@@ -17,23 +17,30 @@ public class CommentService {
         this.commentRepository = commentRepository;
     }
 
-    public Comment AddNewComment(Comment comment){
-       return commentRepository.save(comment);
+    public Comment addNewComment(Comment comment) {
+        return commentRepository.save(comment);
     }
 
-    public List<Comment> GetAllComments(String postId){
+    public List<Comment> getAllComments(String postId) {
         return commentRepository.findByPostId(postId);
     }
 
-    public void UpdateComment(CommentDto commentDto){
-        Comment comment = commentRepository.findById(commentDto.getId()).get();
-        comment.setComment(commentDto.getComment());
-
-        commentRepository.save(comment);
+    public void updateComment(CommentDto commentDto) {
+        Optional<Comment> optionalComment = commentRepository.findById(commentDto.getId());
+        if (optionalComment.isPresent()) {
+            Comment comment = optionalComment.get();
+            comment.setComment(commentDto.getComment());
+            commentRepository.save(comment);
+        } else {
+            throw new RuntimeException("Comment not found with ID: " + commentDto.getId());
+        }
     }
 
-    public void DeleteComment(String commentId){
-        commentRepository.deleteById(commentId);
+    public void deleteComment(String commentId) {
+        if (commentRepository.existsById(commentId)) {
+            commentRepository.deleteById(commentId);
+        } else {
+            throw new RuntimeException("Comment not found with ID: " + commentId);
+        }
     }
-
 }
