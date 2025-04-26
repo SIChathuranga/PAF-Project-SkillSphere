@@ -1,7 +1,7 @@
 package com.backend.backend.Service;
 
-import com.example.userstatus.model.UserStatus;
-import com.example.userstatus.repository.UserStatusRepository;
+import com.backend.backend.Model.UserStatus;
+import com.backend.backend.Repository.UserStatusRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
