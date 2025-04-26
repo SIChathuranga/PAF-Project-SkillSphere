@@ -1,4 +1,4 @@
-package Controller.dto;
+package dto;
 
 public class CommentDto {
     
