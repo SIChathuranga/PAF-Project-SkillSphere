@@ -21,9 +21,9 @@ public class Comment {
     private String id;
 
     private String postId;
-    private String commentedUserId;
-    private String commentedUserName;
-    private String commentedUserImage;
+    // private String commentedUserId;
+    // private String commentedUserName;
+    //private String commentedUserImage;
     private String comment;
     private Date createdAt = new Date();
 

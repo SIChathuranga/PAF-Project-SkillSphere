@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "http://localhost:8080")
 @RequestMapping("/api/v1/comments")
 public class CommentController {
 
@@ -52,7 +52,7 @@ public class CommentController {
     }
 
     // Delete comment
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteComment(@PathVariable String id) {
         try {
             commentService.deleteComment(id);
