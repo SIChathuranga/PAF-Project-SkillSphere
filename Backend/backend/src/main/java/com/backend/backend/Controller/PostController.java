@@ -5,6 +5,7 @@ import com.backend.backend.Service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -19,11 +20,16 @@ public class PostController {
     public Post createPost(@RequestBody Post post) {
         System.out.println("Creating post: " + post);
         try {
+            // Ensure the createdAt is set to current time in case it's not set in the request body
+            if (post.getCreatedAt() == null) {
+                post.setCreatedAt(LocalDateTime.now());
+            }
             return postService.createPost(post);
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("Error: " + e.getMessage());
         }
-    }
+}
+
 
     // Get a post by ID
     @GetMapping("/{postId}")

@@ -25,6 +25,7 @@ public class Post {
         this.username = username;
         this.description = description;
         this.userImage = userImage;
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now(); 
     }
+    
 }

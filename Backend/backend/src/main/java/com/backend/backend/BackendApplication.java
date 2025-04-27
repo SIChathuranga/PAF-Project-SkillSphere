@@ -11,3 +11,4 @@ public class BackendApplication {
 	}
 
 }
+// This is the main application class for the Spring Boot application.
