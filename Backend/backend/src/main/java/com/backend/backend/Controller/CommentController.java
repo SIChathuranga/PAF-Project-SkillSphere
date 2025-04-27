@@ -19,7 +19,7 @@ public class CommentController {
     private CommentService commentService;
 
     // Create new comment
-    @PostMapping
+    @PostMapping("/add")
     public ResponseEntity<?> createComment(@RequestBody Comment comment) {
         try {
             Comment savedComment = commentService.addNewComment(comment);
@@ -30,7 +30,7 @@ public class CommentController {
     }
 
     // Get comments by post ID
-    @GetMapping("/{postId}")
+    @GetMapping("/getAllComments/{postId}")
     public ResponseEntity<?> getCommentsByPostId(@PathVariable String postId) {
         try {
             List<Comment> comments = commentService.getAllComments(postId);
@@ -41,7 +41,7 @@ public class CommentController {
     }
 
     // Update comment
-    @PutMapping
+    @PutMapping("/update")
     public ResponseEntity<?> updateComment(@RequestBody CommentDto commentDto) {
         try {
             commentService.updateComment(commentDto);
