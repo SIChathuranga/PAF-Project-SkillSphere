@@ -1,8 +1,8 @@
-package service;
+package com.backend.backend.Service;
 
-import repository.CommentRepository;
-import dto.CommentDto;
-import model.Comment;
+import com.backend.backend.Repository.CommentRepository;
+import com.backend.backend.Model.Comment;
+import com.backend.backend.dto.CommentDto;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

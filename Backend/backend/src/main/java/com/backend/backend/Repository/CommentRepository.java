@@ -1,11 +1,9 @@
-package repository;
+package com.backend.backend.Repository;
 
-
-
-
-import model.Comment;
+import com.backend.backend.Model.Comment;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
+
 
 import java.util.List;
 

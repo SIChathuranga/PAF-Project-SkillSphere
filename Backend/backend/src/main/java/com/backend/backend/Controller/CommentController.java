@@ -1,11 +1,12 @@
-package controller;
+package com.backend.backend.Controller;
 
-import dto.CommentDto;
-import model.Comment;
-import service.CommentService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import com.backend.backend.dto.CommentDto;
+import com.backend.backend.Model.Comment;
+import com.backend.backend.Service.CommentService;
+
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ public class CommentController {
     @Autowired
     private CommentService commentService;
 
-    //Create new comment
+    // Create new comment
     @PostMapping
     public ResponseEntity<?> createComment(@RequestBody Comment comment) {
         try {
@@ -28,7 +29,7 @@ public class CommentController {
         }
     }
 
-    //Get comments by post id
+    // Get comments by post ID
     @GetMapping("/{postId}")
     public ResponseEntity<?> getCommentsByPostId(@PathVariable String postId) {
         try {
@@ -39,8 +40,7 @@ public class CommentController {
         }
     }
 
-
-    //Update comment
+    // Update comment
     @PutMapping
     public ResponseEntity<?> updateComment(@RequestBody CommentDto commentDto) {
         try {
@@ -50,14 +50,15 @@ public class CommentController {
             return ResponseEntity.status(500).body("Error updating comment: " + e.getMessage());
         }
     }
-     //Delete comment
-     @DeleteMapping("/{id}")
-     public ResponseEntity<?> deleteComment(@PathVariable String id) {
-         try {
-             commentService.deleteComment(id);
-             return ResponseEntity.ok("Comment deleted successfully");
-         } catch (Exception e) {
-             return ResponseEntity.status(500).body("Error deleting comment: " + e.getMessage());
-         }
-     }
+
+    // Delete comment
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteComment(@PathVariable String id) {
+        try {
+            commentService.deleteComment(id);
+            return ResponseEntity.ok("Comment deleted successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error deleting comment: " + e.getMessage());
+        }
+    }
 }
