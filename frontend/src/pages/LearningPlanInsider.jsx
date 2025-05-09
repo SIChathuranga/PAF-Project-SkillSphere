@@ -110,7 +110,7 @@ const LearningPlanCard = ({ plan, isCompany = false, onToggleFollow, onToggleCom
   );
 };
 
-const LearningPlanList = ({ isCompany = false }) => {
+const LearningPlanInsider = ({ isCompany = false }) => {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -154,6 +154,6 @@ const LearningPlanList = ({ isCompany = false }) => {
   );
 };
 
-export default LearningPlanList;
+export default  LearningPlanInsider;
 
 // LearningPlanForm.jsx would follow a similar structure with POST /api/learning-plans on submit
