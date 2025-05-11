@@ -136,9 +136,9 @@ const LearningPlanForm = () => {
             onClick={handleAddMore}
             icon={<PlusIcon size={16} />}
           >
-            Add More Section
+            Add More Plan
           </Button>
-          <Button type="submit">Publish Learning Plan</Button>
+          <Button type="submit">Share Learning Plan</Button>
         </div>
       </form>
     </Card>
