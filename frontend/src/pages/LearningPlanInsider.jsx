@@ -112,16 +112,40 @@ const LearningPlanCard = ({ plan, isCompany = false, onToggleFollow, onToggleCom
 
 const LearningPlanInsider = ({ isCompany = false }) => {
   const [plans, setPlans] = useState([]);
+  const [filteredPlans, setFilteredPlans] = useState([]);
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('recent');
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const pageSize = 5;
 
   useEffect(() => {
-    fetch('/api/learning-plans')
-      .then(res => res.json())
-      .then(data => {
+    const fetchPlans = async () => {
+      try {
+        const res = await fetch('/api/learning-plans');
+        const data = await res.json();
         setPlans(data);
         setLoading(false);
-      });
+      } catch (err) {
+        console.error("Failed to fetch plans", err);
+      }
+    };
+    fetchPlans();
   }, []);
+
+  useEffect(() => {
+    const searchFiltered = plans.filter(plan =>
+      plan.company.name.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const sorted = [...searchFiltered].sort((a, b) => {
+      if (sortBy === 'popular') return b.stats.followers - a.stats.followers;
+      if (sortBy === 'likes') return b.stats.likes - a.stats.likes;
+      return new Date(b.timestamp) - new Date(a.timestamp);
+    });
+
+    setFilteredPlans(sorted.slice(0, page * pageSize));
+  }, [plans, search, sortBy, page]);
 
   const handleToggleFollow = async (planId) => {
     await fetch(`/api/learning-plans/${planId}/follow`, { method: 'POST' });
@@ -134,14 +158,32 @@ const LearningPlanInsider = ({ isCompany = false }) => {
 
   const handleToggleComplete = async (planId, sectionIndex) => {
     await fetch(`/api/learning-plans/${planId}/sections/${sectionIndex}`, { method: 'PATCH' });
-    // Update happens in card for real-time reactivity
   };
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p>Loading learning plans...</p>;
 
   return (
     <div className="space-y-6">
-      {plans.map(plan => (
+      <div className="flex justify-between items-center mb-4">
+        <input
+          type="text"
+          placeholder="Search plans..."
+          className="px-3 py-2 border rounded w-full max-w-sm"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <select
+          className="ml-4 px-2 py-2 border rounded"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+        >
+          <option value="recent">Newest</option>
+          <option value="popular">Most Followers</option>
+          <option value="likes">Most Likes</option>
+        </select>
+      </div>
+
+      {filteredPlans.map(plan => (
         <LearningPlanCard
           key={plan.id}
           plan={plan}
@@ -150,10 +192,17 @@ const LearningPlanInsider = ({ isCompany = false }) => {
           onToggleComplete={handleToggleComplete}
         />
       ))}
+
+      {filteredPlans.length < plans.length && (
+        <button
+          onClick={() => setPage(prev => prev + 1)}
+          className="text-sm text-blue-600 hover:underline"
+        >
+          Load More
+        </button>
+      )}
     </div>
   );
 };
 
-export default  LearningPlanInsider;
-
-// LearningPlanForm.jsx would follow a similar structure with POST /api/learning-plans on submit
+export default LearningPlanInsider;
