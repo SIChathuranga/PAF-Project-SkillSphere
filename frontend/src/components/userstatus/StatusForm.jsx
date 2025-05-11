@@ -3,10 +3,10 @@ import { ImageIcon, XIcon, Loader2Icon } from 'lucide-react';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 
-const StatusForm = ({ onSubmitSuccess, isEditing = false, initialData }) => {
+const StatusForm = ({ onSubmit, initialData, isEditing = false }) => {
   const [description, setDescription] = useState(initialData?.description || '');
   const [imagePreview, setImagePreview] = useState(initialData?.imageUrl);
-  const [image, setImage] = useState(undefined);
+  const [image, setImage] = useState();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
@@ -39,24 +39,6 @@ const StatusForm = ({ onSubmitSuccess, isEditing = false, initialData }) => {
     }
   };
 
-  const uploadImageToImgbb = async (image) => {
-    const apiKey = 'b799ee1cdd85a85b131e3d3d1c3b19dd'; // Replace this with your actual imgbb API key
-    const formData = new FormData();
-    formData.append('image', image);
-
-    const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-      method: 'POST',
-      body: formData
-    });
-
-    if (!response.ok) {
-      throw new Error('Image upload failed');
-    }
-
-    const data = await response.json();
-    return data.data.url;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (description.trim().length === 0) {
@@ -67,41 +49,17 @@ const StatusForm = ({ onSubmitSuccess, isEditing = false, initialData }) => {
       setError(`Status must be ${characterLimit} characters or less`);
       return;
     }
-
     setIsSubmitting(true);
     setError(null);
-
     try {
-      let imageUrl = '';
-      if (image) {
-        imageUrl = await uploadImageToImgbb(image);
-      } else if (imagePreview) {
-        imageUrl = imagePreview;
-      }
-
-      const response = await fetch('http://localhost:8080/api/userstatus', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          description: description.trim(),
-          imageUrl
-        })
+      await onSubmit({
+        description: description.trim(),
+        image
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to post status');
-      }
-
       if (!isEditing) {
         setDescription('');
         setImage(undefined);
         setImagePreview(undefined);
-      }
-
-      if (onSubmitSuccess) {
-        onSubmitSuccess();
       }
     } catch (err) {
       setError('Failed to post status. Please try again.');
@@ -183,7 +141,10 @@ const StatusForm = ({ onSubmitSuccess, isEditing = false, initialData }) => {
               Add Image
             </Button>
           </div>
-          <Button type="submit" disabled={isSubmitting || description.length > characterLimit}>
+          <Button
+            type="submit"
+            disabled={isSubmitting || description.length > characterLimit}
+          >
             {isSubmitting ? (
               <>
                 <Loader2Icon size={18} className="animate-spin" />
