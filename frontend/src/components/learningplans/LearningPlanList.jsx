@@ -96,7 +96,7 @@ const LearningPlanForm = () => {
 
               <div>
                 <label htmlFor={`title-${index}`} className="block text-sm font-medium text-gray-700">
-                  Title
+                  Learning Plan Title
                 </label>
                 <input
                   type="text"
