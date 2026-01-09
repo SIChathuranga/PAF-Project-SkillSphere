@@ -1,309 +1,613 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { UserIcon, AtSignIcon, LockIcon, CameraIcon, BriefcaseIcon, TagIcon, ArrowLeftIcon, ArrowRightIcon, CheckIcon } from 'lucide-react';
-import Input from '../components/ui/Input';
-import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  UserIcon,
+  AtSignIcon,
+  LockIcon,
+  CameraIcon,
+  BriefcaseIcon,
+  TagIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  CheckIcon,
+  XIcon
+} from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { Button, Input, Card, Checkbox } from '../components/ui';
+import ThemeToggle from '../components/common/ThemeToggle';
 
 const Register = () => {
   const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // Form data
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    headline: '',
+    bio: '',
+    expertise: [],
+    skills: [],
+    agreeToTerms: false
+  });
+
+  const { signup, loginWithGoogle, loginWithFacebook } = useAuth();
+  const navigate = useNavigate();
+
   const totalSteps = 3;
 
+  const popularSkills = [
+    'JavaScript', 'React', 'Python', 'UI/UX Design', 'Data Science',
+    'Machine Learning', 'Node.js', 'TypeScript', 'AWS', 'Docker',
+    'Project Management', 'Digital Marketing', 'Graphic Design', 'Mobile Development'
+  ];
+
+  const expertiseAreas = [
+    'Web Development', 'Mobile Development', 'Data Science', 'AI/ML',
+    'Cloud Computing', 'DevOps', 'UI/UX Design', 'Cybersecurity',
+    'Product Management', 'Digital Marketing', 'Content Creation'
+  ];
+
+  const updateFormData = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setError('');
+  };
+
+  const validateStep = (currentStep) => {
+    switch (currentStep) {
+      case 1:
+        if (!formData.firstName.trim()) return 'First name is required';
+        if (!formData.lastName.trim()) return 'Last name is required';
+        if (!formData.email.trim()) return 'Email is required';
+        if (!formData.password) return 'Password is required';
+        if (formData.password.length < 8) return 'Password must be at least 8 characters';
+        if (formData.password !== formData.confirmPassword) return 'Passwords do not match';
+        return null;
+      case 2:
+        if (!formData.headline.trim()) return 'Professional headline is required';
+        return null;
+      case 3:
+        if (formData.skills.length === 0) return 'Please select at least one skill';
+        if (!formData.agreeToTerms) return 'You must agree to the terms and conditions';
+        return null;
+      default:
+        return null;
+    }
+  };
+
   const goToNextStep = () => {
+    const validationError = validateStep(step);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     if (step < totalSteps) {
       setStep(step + 1);
+      setError('');
     }
   };
 
   const goToPrevStep = () => {
     if (step > 1) {
       setStep(step - 1);
+      setError('');
     }
   };
 
+  const toggleSkill = (skill) => {
+    const skills = formData.skills.includes(skill)
+      ? formData.skills.filter(s => s !== skill)
+      : [...formData.skills, skill];
+    updateFormData('skills', skills);
+  };
+
+  const toggleExpertise = (area) => {
+    const expertise = formData.expertise.includes(area)
+      ? formData.expertise.filter(e => e !== area)
+      : [...formData.expertise, area];
+    updateFormData('expertise', expertise);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const validationError = validateStep(step);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await signup(formData.email, formData.password, {
+        displayName: `${formData.firstName} ${formData.lastName}`,
+        headline: formData.headline,
+        bio: formData.bio,
+        skills: formData.skills,
+        expertise: formData.expertise
+      });
+      navigate('/home');
+    } catch (err) {
+      console.error('Registration error:', err);
+      setError(
+        err.code === 'auth/email-already-in-use' ? 'Email is already registered' :
+          err.code === 'auth/weak-password' ? 'Password is too weak' :
+            'Failed to create account. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSocialSignup = async (provider) => {
+    try {
+      setLoading(true);
+      if (provider === 'google') {
+        await loginWithGoogle();
+      } else {
+        await loginWithFacebook();
+      }
+      navigate('/home');
+    } catch (err) {
+      setError(`Failed to sign up with ${provider}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Password strength indicator
+  const getPasswordStrength = () => {
+    const password = formData.password;
+    if (!password) return { strength: 0, label: '', color: '' };
+
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+
+    const levels = [
+      { label: 'Very Weak', color: 'bg-red-500' },
+      { label: 'Weak', color: 'bg-orange-500' },
+      { label: 'Fair', color: 'bg-yellow-500' },
+      { label: 'Good', color: 'bg-blue-500' },
+      { label: 'Strong', color: 'bg-green-500' }
+    ];
+
+    return { strength, ...levels[Math.min(strength, 4)] };
+  };
+
+  const passwordStrength = getPasswordStrength();
+
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-gray-50">
+    <div className="min-h-screen flex">
+      {/* Theme Toggle */}
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
+
       {/* Left side - Form */}
-      <div className="flex-1 flex items-center justify-center p-6 md:p-10">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-10">
-            <div className="flex items-center justify-center mb-2">
-              <div className="bg-gradient-to-r from-blue-600 to-blue-400 w-10 h-10 rounded-lg flex items-center justify-center">
-                <svg
-                  viewBox="0 0 24 24"
-                  width="24"
-                  height="24"
-                  stroke="white"
-                  strokeWidth="2"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+      <div className="flex-1 flex items-center justify-center p-6 md:p-10 bg-secondary overflow-y-auto">
+        <div className="w-full max-w-md py-8 animate-slide-up">
+          {/* Logo */}
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center mb-4">
+              <div className="w-14 h-14 rounded-2xl gradient-bg flex items-center justify-center shadow-lg">
+                <svg viewBox="0 0 24 24" width="32" height="32" stroke="white" strokeWidth="2" fill="none">
                   <circle cx="12" cy="12" r="10"></circle>
                   <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
                   <line x1="9" y1="9" x2="9.01" y2="9"></line>
                   <line x1="15" y1="9" x2="15.01" y2="9"></line>
                 </svg>
               </div>
-              <span className="ml-2 text-2xl font-bold text-gray-800">SkillSphere</span>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">Create your account</h1>
-            <p className="text-gray-600 mt-2">Join our community of skilled professionals</p>
+            <h1 className="text-3xl font-bold gradient-text mb-2">Join SkillSphere</h1>
+            <p className="text-tertiary">Create your account and start your journey</p>
           </div>
-          {/* Progress indicators */}
+
+          {/* Progress Steps */}
           <div className="mb-8">
-            <div className="flex items-center justify-between">
-              {[1, 2, 3].map((s) => (
-                <div key={s} className="flex flex-col items-center">
+            <div className="flex items-center justify-between relative">
+              {/* Progress Line */}
+              <div className="absolute top-4 left-0 right-0 h-0.5 bg-tertiary">
+                <div
+                  className="h-full gradient-bg transition-all duration-500"
+                  style={{ width: `${((step - 1) / (totalSteps - 1)) * 100}%` }}
+                ></div>
+              </div>
+
+              {[
+                { num: 1, label: 'Account' },
+                { num: 2, label: 'Profile' },
+                { num: 3, label: 'Skills' }
+              ].map((s) => (
+                <div key={s.num} className="flex flex-col items-center relative z-10">
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      s < step
-                        ? 'bg-green-500 text-white'
-                        : s === step
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-500'
-                    }`}
+                    className={`
+                      w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm
+                      transition-all duration-300 
+                      ${s.num < step
+                        ? 'gradient-bg text-white shadow-lg'
+                        : s.num === step
+                          ? 'gradient-bg text-white shadow-lg ring-4 ring-blue-500/20'
+                          : 'bg-tertiary text-muted'
+                      }
+                    `}
                   >
-                    {s < step ? <CheckIcon size={16} /> : s}
+                    {s.num < step ? <CheckIcon size={16} /> : s.num}
                   </div>
-                  <span className="text-xs mt-1 text-gray-500">
-                    {s === 1 ? 'Basic Info' : s === 2 ? 'Profile' : 'Skills'}
+                  <span className={`text-xs mt-2 font-medium ${s.num <= step ? 'text-brand' : 'text-muted'}`}>
+                    {s.label}
                   </span>
                 </div>
               ))}
             </div>
-            <div className="mt-2 flex w-full">
-              <div className={`h-1 flex-1 ${step > 1 ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
-              <div className={`h-1 flex-1 ${step > 2 ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
-            </div>
           </div>
+
+          {/* Registration Card */}
           <Card className="mb-6">
-            <form>
-              {/* Step 1: Basic Info */}
+            <form onSubmit={handleSubmit}>
+              {/* Error Message */}
+              {error && (
+                <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm animate-fade-in">
+                  {error}
+                </div>
+              )}
+
+              {/* Step 1: Account Details */}
               {step === 1 && (
-                <div className="space-y-5">
+                <div className="space-y-4 animate-fade-in">
                   <div className="grid grid-cols-2 gap-4">
-                    <Input label="First Name" placeholder="John" icon={<UserIcon size={18} />} required />
-                    <Input label="Last Name" placeholder="Doe" required />
+                    <Input
+                      label="First Name"
+                      placeholder="John"
+                      icon={<UserIcon size={18} />}
+                      value={formData.firstName}
+                      onChange={(e) => updateFormData('firstName', e.target.value)}
+                      required
+                    />
+                    <Input
+                      label="Last Name"
+                      placeholder="Doe"
+                      value={formData.lastName}
+                      onChange={(e) => updateFormData('lastName', e.target.value)}
+                      required
+                    />
                   </div>
-                  <Input type="email" label="Email address" placeholder="name@example.com" icon={<AtSignIcon size={18} />} required />
-                  <Input type="password" label="Password" placeholder="Create a password" icon={<LockIcon size={18} />} required />
-                  <div className="text-xs text-gray-500 -mt-3">
-                    <p>Password must contain:</p>
-                    <ul className="pl-4 mt-1 space-y-1">
-                      <li className="flex items-center">
-                        <CheckIcon size={12} className="text-green-500 mr-1" />
-                        <span>At least 8 characters</span>
-                      </li>
-                      <li className="flex items-center">
-                        <CheckIcon size={12} className="text-green-500 mr-1" />
-                        <span>At least 1 uppercase letter</span>
-                      </li>
-                      <li className="flex items-center">
-                        <CheckIcon size={12} className="text-green-500 mr-1" />
-                        <span>At least 1 number</span>
-                      </li>
-                    </ul>
+
+                  <Input
+                    type="email"
+                    label="Email Address"
+                    placeholder="name@example.com"
+                    icon={<AtSignIcon size={18} />}
+                    value={formData.email}
+                    onChange={(e) => updateFormData('email', e.target.value)}
+                    required
+                  />
+
+                  <div>
+                    <Input
+                      type="password"
+                      label="Password"
+                      placeholder="Create a strong password"
+                      icon={<LockIcon size={18} />}
+                      value={formData.password}
+                      onChange={(e) => updateFormData('password', e.target.value)}
+                      required
+                    />
+                    {formData.password && (
+                      <div className="mt-2">
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-1.5 bg-tertiary rounded-full overflow-hidden">
+                            <div
+                              className={`h-full ${passwordStrength.color} transition-all duration-300`}
+                              style={{ width: `${(passwordStrength.strength / 5) * 100}%` }}
+                            ></div>
+                          </div>
+                          <span className={`text-xs font-medium ${passwordStrength.color.replace('bg-', 'text-')}`}>
+                            {passwordStrength.label}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <Input type="password" label="Confirm Password" placeholder="Confirm your password" icon={<LockIcon size={18} />} required />
-                  <div className="flex justify-end">
-                    <Button onClick={goToNextStep} className="px-6">
-                      Next <ArrowRightIcon size={16} className="ml-1" />
+
+                  <Input
+                    type="password"
+                    label="Confirm Password"
+                    placeholder="Confirm your password"
+                    icon={<LockIcon size={18} />}
+                    value={formData.confirmPassword}
+                    onChange={(e) => updateFormData('confirmPassword', e.target.value)}
+                    required
+                    error={formData.confirmPassword && formData.password !== formData.confirmPassword ? 'Passwords do not match' : ''}
+                  />
+
+                  {/* Social Signup */}
+                  <div className="relative my-4">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-[rgb(var(--color-border))]"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-4 bg-primary text-tertiary">Or sign up with</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => handleSocialSignup('google')}
+                      className="justify-center"
+                    >
+                      <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                      </svg>
+                      Google
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => handleSocialSignup('facebook')}
+                      className="justify-center"
+                    >
+                      <svg className="w-5 h-5 mr-2" fill="#1877F2" viewBox="0 0 24 24">
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                      </svg>
+                      Facebook
                     </Button>
                   </div>
                 </div>
               )}
+
               {/* Step 2: Profile Setup */}
               {step === 2 && (
-                <div className="space-y-5">
-                  <div className="flex flex-col items-center mb-2">
-                    <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center relative mb-4">
-                      <UserIcon size={40} className="text-gray-400" />
-                      <div className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-1.5 cursor-pointer">
-                        <CameraIcon size={14} className="text-white" />
+                <div className="space-y-5 animate-fade-in">
+                  {/* Profile Photo Upload */}
+                  <div className="flex flex-col items-center mb-4">
+                    <div className="relative">
+                      <div className="w-24 h-24 rounded-full bg-tertiary flex items-center justify-center overflow-hidden">
+                        <UserIcon size={40} className="text-muted" />
                       </div>
-                    </div>
-                    <p className="text-sm text-gray-500">Upload a profile picture</p>
-                  </div>
-                  <Input label="Headline" placeholder="e.g., Software Developer at Tech Company" icon={<BriefcaseIcon size={18} />} required />
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Bio <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      rows={3}
-                      placeholder="Tell us about yourself..."
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    ></textarea>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Areas of Expertise <span className="text-red-500">*</span>
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {['Web Development', 'UX Design', 'Marketing', 'Data Science'].map((area) => (
-                        <div key={area} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center">
-                          {area}
-                          <button className="ml-1.5 text-blue-600 hover:text-blue-800">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M18 6L6 18M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </div>
-                      ))}
-                      <button className="border border-dashed border-gray-300 px-3 py-1 rounded-full text-sm text-gray-500 hover:border-gray-400">
-                        + Add more
+                      <button
+                        type="button"
+                        className="absolute bottom-0 right-0 p-2 rounded-full gradient-bg text-white shadow-lg hover:scale-110 transition-transform"
+                      >
+                        <CameraIcon size={16} />
                       </button>
                     </div>
+                    <p className="text-sm text-tertiary mt-3">Add a profile photo</p>
                   </div>
-                  <div className="flex justify-between">
-                    <Button variant="secondary" onClick={goToPrevStep}>
-                      <ArrowLeftIcon size={16} className="mr-1" /> Back
-                    </Button>
-                    <Button onClick={goToNextStep}>
-                      Next <ArrowRightIcon size={16} className="ml-1" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-              {/* Step 3: Skill Selection */}
-              {step === 3 && (
-                <div className="space-y-5">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Select your skills <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <Input placeholder="Search for skills..." icon={<TagIcon size={18} />} />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-700">Popular Skills</p>
-                    <div className="flex flex-wrap gap-2">
-                      {['JavaScript', 'React', 'UI/UX Design', 'Python', 'Project Management', 'Digital Marketing', 'Data Analysis', 'Communication', 'Leadership', 'Problem Solving'].map((skill) => (
-                        <div
-                          key={skill}
-                          className="border border-gray-300 px-3 py-1 rounded-full text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 cursor-pointer transition-colors"
-                        >
-                          + {skill}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-700">Your Selected Skills</p>
-                    <div className="flex flex-wrap gap-2">
-                      {['React', 'TypeScript', 'UI Design'].map((skill) => (
-                        <div key={skill} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center">
-                          {skill}
-                          <button className="ml-1.5 text-blue-600 hover:text-blue-800">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M18 6L6 18M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex items-start mt-4">
-                    <input
-                      id="terms"
-                      name="terms"
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1"
+
+                  <Input
+                    label="Professional Headline"
+                    placeholder="e.g., Full Stack Developer at Tech Corp"
+                    icon={<BriefcaseIcon size={18} />}
+                    value={formData.headline}
+                    onChange={(e) => updateFormData('headline', e.target.value)}
+                    required
+                  />
+
+                  <div>
+                    <label className="label">Bio</label>
+                    <textarea
+                      rows={3}
+                      placeholder="Tell us about yourself, your experience, and what you're passionate about..."
+                      className="input resize-none"
+                      value={formData.bio}
+                      onChange={(e) => updateFormData('bio', e.target.value)}
                     />
-                    <label htmlFor="terms" className="ml-2 block text-sm text-gray-600">
-                      I agree to the{' '}
-                      <a href="#" className="text-blue-600 hover:text-blue-500">
-                        Terms of Service
-                      </a>{' '}
-                      and{' '}
-                      <a href="#" className="text-blue-600 hover:text-blue-500">
-                        Privacy Policy
-                      </a>
-                    </label>
                   </div>
-                  <div className="flex justify-between">
-                    <Button variant="secondary" onClick={goToPrevStep}>
-                      <ArrowLeftIcon size={16} className="mr-1" /> Back
-                    </Button>
-                    <Button type="submit">Complete Registration</Button>
+
+                  <div>
+                    <label className="label">Areas of Expertise</label>
+                    <div className="flex flex-wrap gap-2">
+                      {expertiseAreas.map((area) => (
+                        <button
+                          key={area}
+                          type="button"
+                          onClick={() => toggleExpertise(area)}
+                          className={`
+                            px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200
+                            ${formData.expertise.includes(area)
+                              ? 'gradient-bg text-white shadow-md'
+                              : 'bg-tertiary text-secondary hover:bg-hover'
+                            }
+                          `}
+                        >
+                          {formData.expertise.includes(area) && (
+                            <CheckIcon size={14} className="inline mr-1" />
+                          )}
+                          {area}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
+
+              {/* Step 3: Skills Selection */}
+              {step === 3 && (
+                <div className="space-y-5 animate-fade-in">
+                  <div>
+                    <label className="label">Select Your Skills</label>
+                    <Input
+                      placeholder="Search for skills..."
+                      icon={<TagIcon size={18} />}
+                    />
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-medium text-secondary mb-3">Popular Skills</p>
+                    <div className="flex flex-wrap gap-2">
+                      {popularSkills.map((skill) => (
+                        <button
+                          key={skill}
+                          type="button"
+                          onClick={() => toggleSkill(skill)}
+                          className={`
+                            px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200
+                            ${formData.skills.includes(skill)
+                              ? 'gradient-bg text-white shadow-md'
+                              : 'border border-[rgb(var(--color-border))] text-secondary hover:border-brand hover:text-brand'
+                            }
+                          `}
+                        >
+                          {formData.skills.includes(skill) ? (
+                            <XIcon size={14} className="inline mr-1" />
+                          ) : (
+                            <span className="mr-1">+</span>
+                          )}
+                          {skill}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {formData.skills.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium text-secondary mb-3">
+                        Your Selected Skills ({formData.skills.length})
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.skills.map((skill) => (
+                          <span
+                            key={skill}
+                            className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium gradient-bg text-white"
+                          >
+                            {skill}
+                            <button
+                              type="button"
+                              onClick={() => toggleSkill(skill)}
+                              className="ml-2 hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                            >
+                              <XIcon size={12} />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <Checkbox
+                    label={
+                      <span>
+                        I agree to the{' '}
+                        <a href="#" className="text-brand hover:underline">Terms of Service</a>
+                        {' '}and{' '}
+                        <a href="#" className="text-brand hover:underline">Privacy Policy</a>
+                      </span>
+                    }
+                    checked={formData.agreeToTerms}
+                    onChange={(e) => updateFormData('agreeToTerms', e.target.checked)}
+                  />
+                </div>
+              )}
+
+              {/* Navigation Buttons */}
+              <div className="flex justify-between mt-6">
+                {step > 1 ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={goToPrevStep}
+                    icon={<ArrowLeftIcon size={16} />}
+                  >
+                    Back
+                  </Button>
+                ) : (
+                  <div></div>
+                )}
+
+                {step < totalSteps ? (
+                  <Button
+                    type="button"
+                    onClick={goToNextStep}
+                    icon={<ArrowRightIcon size={16} />}
+                    iconPosition="right"
+                  >
+                    Continue
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    loading={loading}
+                  >
+                    Create Account
+                  </Button>
+                )}
+              </div>
             </form>
           </Card>
+
+          {/* Sign In Link */}
           <div className="text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-tertiary">
               Already have an account?{' '}
-              <Link to="/" className="font-medium text-blue-600 hover:text-blue-500">
-                Log in
+              <Link to="/login" className="font-semibold text-brand hover:underline">
+                Sign in
               </Link>
             </p>
           </div>
         </div>
       </div>
-      {/* Right side - Image and info */}
-      <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-blue-600 to-blue-400 p-10 items-center justify-center relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <svg width="100%" height="100%" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-          </svg>
-        </div>
-        <div className="relative z-10 max-w-md text-white">
-          <div className="mb-8">
-            <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
-                stroke="white"
-                strokeWidth="2"
-              />
-              <path d="M15 9L9 15M9 9L15 15" stroke="white" strokeWidth="2" strokeLinecap="round" />
-            </svg>
+
+      {/* Right side - Hero */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        <div className="absolute inset-0 gradient-bg-secondary"></div>
+
+        {/* Animated Background */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 left-0 w-full h-full">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute rounded-full bg-white/20"
+                style={{
+                  width: `${Math.random() * 200 + 100}px`,
+                  height: `${Math.random() * 200 + 100}px`,
+                  top: `${Math.random() * 100}%`,
+                  left: `${Math.random() * 100}%`,
+                  animation: `float ${Math.random() * 5 + 5}s ease-in-out infinite`,
+                  animationDelay: `${Math.random() * 2}s`
+                }}
+              ></div>
+            ))}
           </div>
-          <h2 className="text-3xl font-bold mb-6">Join the SkillSphere Community</h2>
-          <p className="text-xl mb-8">
-            Create your profile, showcase your expertise, and connect with professionals who share your passion for
-            learning.
-          </p>
-          <div className="space-y-4">
-            <div className="flex items-start">
-              <div className="bg-white/10 p-2 rounded-full">
-                <CheckIcon size={20} className="text-white" />
-              </div>
-              <div className="ml-4">
-                <h3 className="font-medium text-lg">Share Your Knowledge</h3>
-                <p className="text-white/80">
-                  Create posts, tutorials, and learning plans to help others grow
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start">
-              <div className="bg-white/10 p-2 rounded-full">
-                <CheckIcon size={20} className="text-white" />
-              </div>
-              <div className="ml-4">
-                <h3 className="font-medium text-lg">Build Your Network</h3>
-                <p className="text-white/80">
-                  Connect with like-minded professionals and industry experts
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start">
-              <div className="bg-white/10 p-2 rounded-full">
-                <CheckIcon size={20} className="text-white" />
-              </div>
-              <div className="ml-4">
-                <h3 className="font-medium text-lg">Track Your Progress</h3>
-                <p className="text-white/80">
-                  Organize your learning journey with structured plans and milestones
-                </p>
-              </div>
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col items-center justify-center w-full p-12 text-white">
+          <div className="max-w-lg">
+            <h2 className="text-4xl font-bold mb-6">
+              Start Your Professional Journey
+            </h2>
+            <p className="text-xl text-white/80 mb-10">
+              Join our community of professionals sharing knowledge and building valuable skills.
+            </p>
+
+            <div className="space-y-6">
+              {[
+                { icon: '🎯', title: 'Showcase Your Skills', desc: 'Build a professional profile that highlights your expertise' },
+                { icon: '🤝', title: 'Connect & Network', desc: 'Meet like-minded professionals and industry experts' },
+                { icon: '📚', title: 'Learn & Grow', desc: 'Access learning resources and track your progress' }
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-4 glass-card p-4">
+                  <div className="text-3xl">{item.icon}</div>
+                  <div>
+                    <h3 className="font-semibold text-lg">{item.title}</h3>
+                    <p className="text-white/70 text-sm">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

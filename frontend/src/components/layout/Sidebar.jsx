@@ -1,98 +1,199 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { HomeIcon, CameraIcon, BookOpenIcon, UsersIcon, MessageSquareIcon, BookmarkIcon } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import {
+  HomeIcon,
+  UsersIcon,
+  MessageSquareIcon,
+  BookOpenIcon,
+  CalendarIcon,
+  UserCircleIcon,
+  BookmarkIcon,
+  SettingsIcon,
+  TrendingUpIcon,
+  AwardIcon
+} from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { Avatar, Badge } from '../ui';
+
 const Sidebar = () => {
-  const navigation = [{
-    name: 'Feed',
-    icon: HomeIcon,
-    href: '#',
-    current: true
-  }, {
-    name: 'Status',
-    icon: CameraIcon,
-    href: '#',
-    current: false
-  }, {
-    name: 'Learning Plans',
-    icon: BookOpenIcon,
-    href: '#',
-    current: false
-  }, {
-    name: 'Network',
-    icon: UsersIcon,
-    href: '#',
-    current: false
-  }, {
-    name: 'Messages',
-    icon: MessageSquareIcon,
-    href: '#',
-    current: false
-  }];
-  return <div className="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 pt-16 bg-white border-r border-gray-200">
-      <div className="h-full flex flex-col justify-between overflow-y-auto">
-        <div className="px-4 py-6">
-          {/* User profile summary */}
-          <div className="pb-5 mb-5 border-b border-gray-200">
-            <div className="flex items-center">
-              <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white">
-                JD
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-900">John Doe</p>
-                <p className="text-xs text-gray-500">UX Designer at TechCorp</p>
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-4 text-center text-xs">
-              <div className="bg-gray-50 rounded-md p-2">
-                <p className="font-medium text-gray-900">127</p>
-                <p className="text-gray-500">Connections</p>
-              </div>
-              <div className="bg-gray-50 rounded-md p-2">
-                <p className="font-medium text-gray-900">1.2k</p>
-                <p className="text-gray-500">Post Views</p>
+  const location = useLocation();
+  const { userProfile, currentUser } = useAuth();
+
+  const mainNavigation = [
+    { name: 'Feed', icon: HomeIcon, href: '/home', badge: null },
+    { name: 'Network', icon: UsersIcon, href: '/network', badge: '12' },
+    { name: 'Messages', icon: MessageSquareIcon, href: '/messages', badge: '3' },
+    { name: 'Learning', icon: BookOpenIcon, href: '/learning', badge: null },
+    { name: 'Events', icon: CalendarIcon, href: '/events', badge: '2' },
+    { name: 'Groups', icon: UsersIcon, href: '/groups', badge: null },
+  ];
+
+  const secondaryNavigation = [
+    { name: 'Saved Posts', icon: BookmarkIcon, href: '/saved' },
+    { name: 'My Profile', icon: UserCircleIcon, href: '/profile' },
+    { name: 'Settings', icon: SettingsIcon, href: '/settings' },
+  ];
+
+  const isActive = (href) => {
+    return location.pathname === href || location.pathname.startsWith(href + '/');
+  };
+
+  return (
+    <aside className="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 md:pt-20 bg-primary border-r border-[rgb(var(--color-border))] z-30">
+      <div className="flex flex-col h-full overflow-y-auto">
+        {/* User Profile Card */}
+        <div className="p-4">
+          <div className="card p-4">
+            <div className="flex items-center gap-3">
+              <Avatar
+                src={userProfile?.photoURL}
+                name={userProfile?.displayName || currentUser?.email}
+                size="lg"
+                online
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-primary truncate">
+                  {userProfile?.displayName || 'User'}
+                </p>
+                <p className="text-xs text-tertiary truncate">
+                  {userProfile?.headline || 'Add a headline'}
+                </p>
               </div>
             </div>
-          </div>
-          {/* Navigation */}
-          <nav className="space-y-1 pb-5 mb-5 border-b border-gray-200">
-            {navigation.map(item => <Link key={item.name} to={item.href} className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${item.current ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:text-blue-700 hover:bg-blue-50'}`}>
-                <item.icon className={`mr-3 flex-shrink-0 h-5 w-5 ${item.current ? 'text-blue-700' : 'text-gray-500 group-hover:text-blue-700'}`} aria-hidden="true" />
-                {item.name}
-              </Link>)}
-          </nav>
-          {/* Bookmarked content */}
-          <div>
-            <h3 className="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Bookmarked
-            </h3>
-            <div className="mt-2 space-y-1">
-              <Link to="#" className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-700 hover:text-blue-700 hover:bg-blue-50">
-                <BookmarkIcon className="mr-3 flex-shrink-0 h-5 w-5 text-gray-500" />
-                Advanced UI Design Techniques
-              </Link>
-              <Link to="#" className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-700 hover:text-blue-700 hover:bg-blue-50">
-                <BookmarkIcon className="mr-3 flex-shrink-0 h-5 w-5 text-gray-500" />
-                React Performance Optimization
-              </Link>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-2 mt-4">
+              <div className="text-center p-2 rounded-lg bg-tertiary">
+                <p className="text-lg font-bold text-primary">
+                  {userProfile?.connections?.length || 0}
+                </p>
+                <p className="text-[10px] text-tertiary">Connections</p>
+              </div>
+              <div className="text-center p-2 rounded-lg bg-tertiary">
+                <p className="text-lg font-bold text-primary">
+                  {userProfile?.followers?.length || 0}
+                </p>
+                <p className="text-[10px] text-tertiary">Followers</p>
+              </div>
+              <div className="text-center p-2 rounded-lg bg-tertiary">
+                <p className="text-lg font-bold text-primary">
+                  {userProfile?.skills?.length || 0}
+                </p>
+                <p className="text-[10px] text-tertiary">Skills</p>
+              </div>
             </div>
+
+            {/* View Profile Button */}
+            <Link
+              to="/profile"
+              className="block mt-4 text-center text-sm font-medium text-brand hover:underline"
+            >
+              View Profile
+            </Link>
           </div>
         </div>
-        {/* Footer */}
-        <div className="px-4 py-4 border-t border-gray-200">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 16V12M12 8H12.01M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <Link to="#" className="text-sm text-gray-600 hover:text-blue-600">
-                Help & Support
-              </Link>
+
+        {/* Main Navigation */}
+        <nav className="flex-1 px-4 pb-4">
+          <div className="mb-4">
+            <p className="px-3 text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+              Main Menu
+            </p>
+            <div className="space-y-1">
+              {mainNavigation.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`
+                    flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium
+                    transition-all duration-200 group
+                    ${isActive(item.href)
+                      ? 'gradient-bg text-white shadow-lg shadow-blue-500/20'
+                      : 'text-secondary hover:text-primary hover:bg-tertiary'
+                    }
+                  `}
+                >
+                  <div className="flex items-center gap-3">
+                    <item.icon
+                      size={20}
+                      className={isActive(item.href) ? 'text-white' : 'text-muted group-hover:text-brand'}
+                    />
+                    {item.name}
+                  </div>
+                  {item.badge && (
+                    <Badge
+                      variant={isActive(item.href) ? 'neutral' : 'primary'}
+                      size="sm"
+                      className={isActive(item.href) ? 'bg-white/20 text-white' : ''}
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                </Link>
+              ))}
             </div>
           </div>
+
+          {/* Secondary Navigation */}
+          <div className="mb-4">
+            <p className="px-3 text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+              Account
+            </p>
+            <div className="space-y-1">
+              {secondaryNavigation.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`
+                    flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+                    transition-all duration-200 group
+                    ${isActive(item.href)
+                      ? 'gradient-bg text-white shadow-lg shadow-blue-500/20'
+                      : 'text-secondary hover:text-primary hover:bg-tertiary'
+                    }
+                  `}
+                >
+                  <item.icon
+                    size={20}
+                    className={isActive(item.href) ? 'text-white' : 'text-muted group-hover:text-brand'}
+                  />
+                  {item.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Upgrade Card */}
+          <div className="card gradient-bg-secondary p-4 text-white">
+            <div className="flex items-center gap-2 mb-2">
+              <AwardIcon size={20} />
+              <span className="font-semibold">Go Premium</span>
+            </div>
+            <p className="text-sm text-white/80 mb-3">
+              Unlock exclusive features and stand out from the crowd.
+            </p>
+            <button className="w-full py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors">
+              Upgrade Now
+            </button>
+          </div>
+        </nav>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-[rgb(var(--color-border))]">
+          <div className="flex flex-wrap gap-2 text-xs text-muted">
+            <a href="#" className="hover:text-brand">About</a>
+            <span>•</span>
+            <a href="#" className="hover:text-brand">Privacy</a>
+            <span>•</span>
+            <a href="#" className="hover:text-brand">Terms</a>
+            <span>•</span>
+            <a href="#" className="hover:text-brand">Help</a>
+          </div>
+          <p className="text-xs text-muted mt-2">© 2024 SkillSphere</p>
         </div>
       </div>
-    </div>;
+    </aside>
+  );
 };
+
 export default Sidebar;

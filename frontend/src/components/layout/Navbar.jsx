@@ -1,70 +1,185 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { BellIcon, MessageSquareIcon, SearchIcon } from 'lucide-react';
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  BellIcon,
+  MessageSquareIcon,
+  SearchIcon,
+  MenuIcon,
+  XIcon,
+  UserIcon,
+  SettingsIcon,
+  LogOutIcon,
+  HelpCircleIcon
+} from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { Avatar, Dropdown, Badge } from '../ui';
+import ThemeToggle from '../common/ThemeToggle';
+
 const Navbar = () => {
-  return <nav className="bg-white border-b border-gray-200 fixed w-full z-30">
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const { currentUser, userProfile, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  return (
+    <nav className="fixed top-0 left-0 right-0 z-40 bg-primary/80 backdrop-blur-xl border-b border-[rgb(var(--color-border))]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex items-center">
+          {/* Left: Logo & Search */}
+          <div className="flex items-center gap-4 flex-1">
             {/* Logo */}
-            <Link to="/home" className="flex items-center">
-              <div className="bg-gradient-to-r from-blue-600 to-blue-400 w-8 h-8 rounded-lg flex items-center justify-center">
-                <svg viewBox="0 0 24 24" width="20" height="20" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+            <Link to="/home" className="flex items-center gap-2 flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <svg viewBox="0 0 24 24" width="24" height="24" stroke="white" strokeWidth="2" fill="none">
                   <circle cx="12" cy="12" r="10"></circle>
                   <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
                   <line x1="9" y1="9" x2="9.01" y2="9"></line>
                   <line x1="15" y1="9" x2="15.01" y2="9"></line>
                 </svg>
               </div>
-              <span className="ml-2 text-xl font-bold text-gray-800">
+              <span className="hidden sm:block text-xl font-bold gradient-text">
                 SkillSphere
               </span>
             </Link>
-          </div>
-          {/* Search */}
-          <div className="hidden md:flex md:flex-1 md:items-center md:justify-center px-2 lg:ml-6 lg:justify-center">
-            <div className="max-w-lg w-full">
-              <label htmlFor="search" className="sr-only">
-                Search
-              </label>
+
+            {/* Search */}
+            <form onSubmit={handleSearch} className="hidden md:block flex-1 max-w-md">
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <SearchIcon size={18} className="text-gray-400" />
-                </div>
-                <input id="search" name="search" className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-gray-50 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm" placeholder="Search for skills, people, or content" type="search" />
+                <SearchIcon
+                  size={18}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+                />
+                <input
+                  type="text"
+                  placeholder="Search skills, people, posts..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="input pl-10 py-2 bg-tertiary border-transparent focus:bg-primary focus:border-[rgb(var(--color-border))]"
+                />
               </div>
-            </div>
+            </form>
           </div>
-          {/* Right navigation */}
-          <div className="flex items-center">
-            <button className="p-2 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+          {/* Right: Actions */}
+          <div className="flex items-center gap-2">
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
+            {/* Notifications */}
+            <button className="relative p-2.5 rounded-xl text-secondary hover:text-primary hover:bg-tertiary transition-colors">
               <BellIcon size={20} />
+              <Badge dot variant="error" className="absolute top-1.5 right-1.5" />
             </button>
-            <button className="p-2 ml-2 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+            {/* Messages */}
+            <Link
+              to="/messages"
+              className="relative p-2.5 rounded-xl text-secondary hover:text-primary hover:bg-tertiary transition-colors"
+            >
               <MessageSquareIcon size={20} />
-            </button>
-            <div className="ml-3 relative">
-              <div>
-                <button className="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                  <span className="sr-only">Open user menu</span>
-                  <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
-                    JD
-                  </div>
+              <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                3
+              </span>
+            </Link>
+
+            {/* User Menu */}
+            <Dropdown
+              align="right"
+              trigger={
+                <button className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-tertiary transition-colors">
+                  <Avatar
+                    src={userProfile?.photoURL}
+                    name={userProfile?.displayName || currentUser?.email}
+                    size="sm"
+                    online
+                  />
+                  <span className="hidden lg:block text-sm font-medium text-primary max-w-[120px] truncate">
+                    {userProfile?.displayName?.split(' ')[0] || 'User'}
+                  </span>
                 </button>
+              }
+            >
+              <div className="px-4 py-3 border-b border-[rgb(var(--color-border))]">
+                <p className="text-sm font-medium text-primary">
+                  {userProfile?.displayName || 'User'}
+                </p>
+                <p className="text-xs text-tertiary truncate">
+                  {currentUser?.email}
+                </p>
               </div>
-            </div>
+              <Dropdown.Item
+                icon={<UserIcon size={16} />}
+                onClick={() => navigate('/profile')}
+              >
+                View Profile
+              </Dropdown.Item>
+              <Dropdown.Item
+                icon={<SettingsIcon size={16} />}
+                onClick={() => navigate('/settings')}
+              >
+                Settings
+              </Dropdown.Item>
+              <Dropdown.Item icon={<HelpCircleIcon size={16} />}>
+                Help & Support
+              </Dropdown.Item>
+              <Dropdown.Divider />
+              <Dropdown.Item
+                icon={<LogOutIcon size={16} />}
+                danger
+                onClick={handleLogout}
+              >
+                Sign Out
+              </Dropdown.Item>
+            </Dropdown>
+
+            {/* Mobile Menu Button */}
+            <button
+              className="md:hidden p-2 rounded-xl text-secondary hover:text-primary hover:bg-tertiary"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <XIcon size={24} /> : <MenuIcon size={24} />}
+            </button>
           </div>
         </div>
       </div>
-      {/* Mobile search - visible on mobile only */}
-      <div className="md:hidden p-2 border-t border-gray-200">
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <SearchIcon size={18} className="text-gray-400" />
+
+      {/* Mobile Search */}
+      <div className="md:hidden px-4 pb-3">
+        <form onSubmit={handleSearch}>
+          <div className="relative">
+            <SearchIcon
+              size={18}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+            />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="input pl-10 py-2 bg-tertiary border-transparent"
+            />
           </div>
-          <input className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-gray-50 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm" placeholder="Search for skills, people, or content" type="search" />
-        </div>
+        </form>
       </div>
-    </nav>;
+    </nav>
+  );
 };
+
 export default Navbar;

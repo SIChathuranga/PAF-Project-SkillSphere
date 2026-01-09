@@ -1,0 +1,108 @@
+# ===========================================
+# SkillSphere Project - Git Ignore File
+# ===========================================
+
+# -----------------------------------------
+# Dependencies
+# -----------------------------------------
+node_modules/
+.pnp/
+.pnp.js
+
+# -----------------------------------------
+# Build outputs
+# -----------------------------------------
+/frontend/build/
+/backend/target/
+*.jar
+*.war
+*.class
+
+# -----------------------------------------
+# Environment & Secrets (NEVER COMMIT!)
+# -----------------------------------------
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# Firebase service account key (CRITICAL!)
+**/serviceAccountKey.json
+**/firebase-adminsdk*.json
+firebase-credentials.json
+
+# -----------------------------------------
+# IDE & Editor files
+# -----------------------------------------
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# -----------------------------------------
+# OS generated files
+# -----------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# -----------------------------------------
+# Logs
+# -----------------------------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# -----------------------------------------
+# Testing
+# -----------------------------------------
+/coverage/
+.nyc_output/
+
+# -----------------------------------------
+# Misc
+# -----------------------------------------
+.cache/
+.temp/
+.tmp/
+*.bak
+*.backup
+
+# -----------------------------------------
+# Package manager locks (optional - team should decide)
+# Uncomment if you don't want to track lock files
+# -----------------------------------------
+# package-lock.json
+# yarn.lock
+# pom.xml.releaseBackup
+
+# -----------------------------------------
+# Local development
+# -----------------------------------------
+.local/
+*.local
+
+# -----------------------------------------
+# Debug
+# -----------------------------------------
+.eslintcache
+*.pid
+*.seed
+*.pid.lock

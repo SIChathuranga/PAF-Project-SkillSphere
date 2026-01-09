@@ -1,0 +1,107 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*')
+        && request.resource.size < 5 * 1024 * 1024; // Max 5MB
+    }
+    
+    function isValidVideo() {
+      return request.resource.contentType.matches('video/.*')
+        && request.resource.size < 100 * 1024 * 1024; // Max 100MB
+    }
+    
+    function isValidFile() {
+      return request.resource.size < 10 * 1024 * 1024; // Max 10MB
+    }
+    
+    // ===============================
+    // USER PROFILE IMAGES
+    // ===============================
+    match /users/{userId}/{allPaths=**} {
+      // Anyone can read user images (for profiles)
+      allow read: if true;
+      
+      // Only the user can upload their own images
+      allow write: if isAuthenticated()
+        && isOwner(userId)
+        && isValidImage();
+      
+      // Only owner can delete
+      allow delete: if isAuthenticated()
+        && isOwner(userId);
+    }
+    
+    // ===============================
+    // POST MEDIA
+    // ===============================
+    match /posts/{userId}/{allPaths=**} {
+      // Anyone authenticated can read post media
+      allow read: if isAuthenticated();
+      
+      // Only the post owner can upload
+      allow write: if isAuthenticated()
+        && isOwner(userId)
+        && (isValidImage() || isValidVideo());
+      
+      // Only owner can delete
+      allow delete: if isAuthenticated()
+        && isOwner(userId);
+    }
+    
+    // ===============================
+    // GROUP IMAGES
+    // ===============================
+    match /groups/{groupId}/{allPaths=**} {
+      // Anyone authenticated can read group images
+      allow read: if isAuthenticated();
+      
+      // Only authenticated users can upload (validate in app)
+      allow write: if isAuthenticated()
+        && isValidImage();
+      
+      // Authenticated users can delete (validate ownership in app)
+      allow delete: if isAuthenticated();
+    }
+    
+    // ===============================
+    // EVENT IMAGES
+    // ===============================
+    match /events/{eventId}/{allPaths=**} {
+      // Anyone authenticated can read event images
+      allow read: if isAuthenticated();
+      
+      // Only authenticated users can upload
+      allow write: if isAuthenticated()
+        && isValidImage();
+      
+      // Authenticated users can delete
+      allow delete: if isAuthenticated();
+    }
+    
+    // ===============================
+    // MESSAGE ATTACHMENTS
+    // ===============================
+    match /messages/{conversationId}/{allPaths=**} {
+      // Only conversation participants can read (validate in app)
+      allow read: if isAuthenticated();
+      
+      // Only authenticated users can upload attachments
+      allow write: if isAuthenticated()
+        && isValidFile();
+      
+      // Authenticated users can delete
+      allow delete: if isAuthenticated();
+    }
+  }
+}
