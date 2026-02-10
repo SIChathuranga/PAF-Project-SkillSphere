@@ -1,37 +1,58 @@
-// User Status API service for backend communication
-
+// User Status API service using Backend REST API
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
 export const userStatusApi = {
-    // Get all user statuses
+    /**
+     * Get all user statuses
+     * @returns {Promise<Array>} Array of all status objects
+     */
     getAllStatuses: async () => {
         try {
             const response = await fetch(`${API_URL}/api/v1/user-status/all`);
             if (!response.ok) {
                 throw new Error('Failed to fetch statuses');
             }
-            return await response.json();
+            const statuses = await response.json();
+            return statuses.map(status => ({
+                ...status,
+                createdAt: status.createdAt ? new Date(status.createdAt) : new Date()
+            }));
         } catch (error) {
             console.error('Error fetching statuses:', error);
             throw error;
         }
     },
 
-    // Get status by ID
+    /**
+     * Get single status by ID
+     * @param {string} statusId - The status document ID
+     * @returns {Promise<Object|null>} Status object or null if not found
+     */
     getStatusById: async (statusId) => {
         try {
             const response = await fetch(`${API_URL}/api/v1/user-status/${statusId}`);
+            if (response.status === 404) {
+                return null;
+            }
             if (!response.ok) {
                 throw new Error('Failed to fetch status');
             }
-            return await response.json();
+            const status = await response.json();
+            return {
+                ...status,
+                createdAt: status.createdAt ? new Date(status.createdAt) : new Date()
+            };
         } catch (error) {
             console.error('Error fetching status:', error);
             throw error;
         }
     },
 
-    // Create new status
+    /**
+     * Create new status
+     * @param {Object} statusData - The status data to create
+     * @returns {Promise<Object>} Created status object with ID
+     */
     createStatus: async (statusData) => {
         try {
             const response = await fetch(`${API_URL}/api/v1/user-status/add`, {
@@ -44,14 +65,23 @@ export const userStatusApi = {
             if (!response.ok) {
                 throw new Error('Failed to create status');
             }
-            return await response.json();
+            const status = await response.json();
+            return {
+                ...status,
+                createdAt: status.createdAt ? new Date(status.createdAt) : new Date()
+            };
         } catch (error) {
             console.error('Error creating status:', error);
             throw error;
         }
     },
 
-    // Update status
+    /**
+     * Update status
+     * @param {string} statusId - The status document ID
+     * @param {Object} statusData - The updated status data
+     * @returns {Promise<Object>} Updated status object
+     */
     updateStatus: async (statusId, statusData) => {
         try {
             const response = await fetch(`${API_URL}/api/v1/user-status/update/${statusId}`, {
@@ -64,14 +94,22 @@ export const userStatusApi = {
             if (!response.ok) {
                 throw new Error('Failed to update status');
             }
-            return await response.json();
+            const status = await response.json();
+            return {
+                ...status,
+                createdAt: status.createdAt ? new Date(status.createdAt) : new Date()
+            };
         } catch (error) {
             console.error('Error updating status:', error);
             throw error;
         }
     },
 
-    // Delete status
+    /**
+     * Delete status
+     * @param {string} statusId - The status document ID
+     * @returns {Promise<boolean>} True if deletion was successful
+     */
     deleteStatus: async (statusId) => {
         try {
             const response = await fetch(`${API_URL}/api/v1/user-status/delete/${statusId}`, {
@@ -87,17 +125,41 @@ export const userStatusApi = {
         }
     },
 
-    // Get statuses by user ID
+    /**
+     * Get statuses by user ID
+     * @param {string} userId - The Firebase user ID
+     * @returns {Promise<Array>} Array of user's status objects
+     */
     getStatusesByUser: async (userId) => {
         try {
             const response = await fetch(`${API_URL}/api/v1/user-status/user/${userId}`);
             if (!response.ok) {
                 throw new Error('Failed to fetch user statuses');
             }
-            return await response.json();
+            const statuses = await response.json();
+            return statuses.map(status => ({
+                ...status,
+                createdAt: status.createdAt ? new Date(status.createdAt) : new Date()
+            }));
         } catch (error) {
             console.error('Error fetching user statuses:', error);
             throw error;
         }
     },
+
+    /**
+     * Get recent statuses
+     * @param {number} limitCount - Maximum number of statuses to fetch
+     * @returns {Promise<Array>} Array of recent status objects
+     */
+    getRecentStatuses: async (limitCount = 20) => {
+        try {
+            // Since backend returns all statuses sorted by createdAt desc, we limit client-side
+            const statuses = await userStatusApi.getAllStatuses();
+            return statuses.slice(0, limitCount);
+        } catch (error) {
+            console.error('Error fetching recent statuses:', error);
+            throw error;
+        }
+    }
 };

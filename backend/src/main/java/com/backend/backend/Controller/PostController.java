@@ -1,12 +1,22 @@
 package com.backend.backend.Controller;
 
-import com.backend.backend.Model.Post;
-import com.backend.backend.Service.PostService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.backend.backend.Model.Post;
+import com.backend.backend.Service.PostService;
 
 @RestController
 @RequestMapping("/posts")
@@ -17,42 +27,71 @@ public class PostController {
 
     // Create a new post
     @PostMapping
-    public Post createPost(@RequestBody Post post) {
+    public ResponseEntity<?> createPost(@RequestBody Post post) {
         System.out.println("Creating post: " + post);
         try {
-            // Ensure the createdAt is set to current time in case it's not set in the request body
             if (post.getCreatedAt() == null) {
                 post.setCreatedAt(LocalDateTime.now());
             }
-            return postService.createPost(post);
+            return ResponseEntity.ok(postService.createPost(post));
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Error: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
-}
-
+    }
 
     // Get a post by ID
     @GetMapping("/{postId}")
-    public Post getPostById(@PathVariable String postId) {
-        return postService.getPostById(postId);
+    public ResponseEntity<?> getPostById(@PathVariable String postId) {
+        Post post = postService.getPostById(postId);
+        if (post != null) {
+            return ResponseEntity.ok(post);
+        }
+        return ResponseEntity.notFound().build();
     }
 
     // Update a post by ID
     @PutMapping("/{postId}")
-    public Post updatePost(@PathVariable String postId, @RequestBody Post post) {
-        return postService.updatePost(postId, post);
+    public ResponseEntity<?> updatePost(@PathVariable String postId, @RequestBody Post post) {
+        Post updated = postService.updatePost(postId, post);
+        if (updated != null) {
+            return ResponseEntity.ok(updated);
+        }
+        return ResponseEntity.notFound().build();
     }
 
     // Delete a post by ID
     @DeleteMapping("/{postId}")
-    public String deletePost(@PathVariable String postId) {
+    public ResponseEntity<?> deletePost(@PathVariable String postId) {
         boolean isDeleted = postService.deletePost(postId);
-        return isDeleted ? "Post deleted successfully" : "Post not found";
+        if (isDeleted) {
+            return ResponseEntity.ok("Post deleted successfully");
+        }
+        return ResponseEntity.notFound().build();
     }
 
     // Get all posts
     @GetMapping
-    public List<Post> getAllPosts() {
-        return postService.getAllPosts();
+    public ResponseEntity<List<Post>> getAllPosts() {
+        return ResponseEntity.ok(postService.getAllPosts());
+    }
+
+    // Get posts by user ID
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<Post>> getPostsByUser(@PathVariable String userId) {
+        return ResponseEntity.ok(postService.getPostsByUser(userId));
+    }
+
+    // Like a post
+    @PostMapping("/{postId}/like")
+    public ResponseEntity<?> likePost(@PathVariable String postId, @RequestBody Map<String, String> body) {
+        String userId = body.get("userId");
+        if (userId == null) {
+            return ResponseEntity.badRequest().body("userId is required");
+        }
+        Post post = postService.likePost(postId, userId);
+        if (post != null) {
+            return ResponseEntity.ok(post);
+        }
+        return ResponseEntity.notFound().build();
     }
 }
