@@ -1,5 +1,5 @@
-# Build stage
-FROM maven:3.9-eclipse-temurin-21-alpine AS build
+# Build stage - use Debian-based image (NOT Alpine) for Firebase/gRPC compatibility
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
 # Copy pom.xml first for dependency caching
@@ -15,8 +15,8 @@ COPY src ./src
 ENV MAVEN_OPTS="-Xmx512m -Xms256m"
 RUN mvn clean package -DskipTests -B -q
 
-# Run stage - minimal image
-FROM eclipse-temurin:21-jre-alpine
+# Run stage - Debian-based (NOT Alpine) for Firebase native SSL libraries
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
 # Copy the built jar
