@@ -1,0 +1,12 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    ignore:
+      # react-scripts@5.0.1 transitively pins sockjs@0.3.24 -> uuid@^8.3.2,
+      # which cannot satisfy the security advisory requirement uuid>=14.
+      # Remove this once the frontend dependency chain can resolve uuid>=14.
+      - dependency-name: "uuid"
+        versions: [">=14"]
