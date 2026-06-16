@@ -5,5 +5,7 @@ updates:
     schedule:
       interval: "weekly"
     ignore:
+      # react-scripts@5.0.1 transitively pins sockjs@0.3.24 -> uuid@^8.3.2.
+      # Remove this once the frontend dependency chain can resolve uuid>=14.
       - dependency-name: "uuid"
         versions: ["*"]
