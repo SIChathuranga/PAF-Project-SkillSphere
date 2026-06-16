@@ -9,4 +9,4 @@ updates:
       # which cannot satisfy the security advisory requirement uuid>=14.
       # Remove this once the frontend dependency chain can resolve uuid>=14.
       - dependency-name: "uuid"
-        versions: ["*"]
+        versions: [">=14"]
